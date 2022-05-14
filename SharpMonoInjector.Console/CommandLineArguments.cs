@@ -1,21 +1,17 @@
 ﻿using System.Globalization;
 using System.Linq;
 
-namespace SharpMonoInjector.Console
-{
-    public class CommandLineArguments
-    {
-        private readonly string[] _args;
+namespace SharpMonoInjector.Console {
+    public class CommandLineArguments {
+        readonly string[] _args;
 
-        public CommandLineArguments(string[] args)
-        {
+        public CommandLineArguments(string[] args) {
             _args = args;
         }
 
         public bool IsSwitchPresent(string name) => _args.Any(arg => arg == name);
 
-        public bool GetLongArg(string name, out long value)
-        {
+        public bool GetLongArg(string name, out long value) {
             if (GetStringArg(name, out string str))
                 return long.TryParse(str.StartsWith("0x") ? str.Substring(2) : str, NumberStyles.AllowHexSpecifier, null, out value);
 
@@ -23,8 +19,7 @@ namespace SharpMonoInjector.Console
             return false;
         }
 
-        public bool GetIntArg(string name, out int value)
-        {
+        public bool GetIntArg(string name, out int value) {
             if (GetStringArg(name, out string str))
                 return int.TryParse(str.StartsWith("0x") ? str.Substring(2) : str, NumberStyles.AllowHexSpecifier, null, out value);
 
@@ -32,8 +27,7 @@ namespace SharpMonoInjector.Console
             return false;
         }
 
-        public bool GetStringArg(string name, out string value)
-        {
+        public bool GetStringArg(string name, out string value) {
             for (int i = 0; i < _args.Length; i++) {
                 string arg = _args[i];
 

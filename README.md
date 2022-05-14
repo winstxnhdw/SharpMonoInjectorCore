@@ -1,22 +1,81 @@
-# SharpMonoInjector wh0am1 Mod (Fixed and Updated)
+# SharpMonoInjector4.8
 
-#### Updated SharpMonoInjector to fix the process detection bug, x86/x64 detection bug fixed, and a couple fixes to make it more efficient. No modifications to his injection engine other than some added error checking. Built off Net 4.0 for those that are still on Win7 and can't run NetStandard 2.0. Since he didn't build-in any privilege checking I added some checks and the GUI version will automatically restart as Admin. The console version you'll get a warning and instructions on to 'fix' the game.
+SharpMonoInjector4.8 is a tool for injecting assemblies into Mono embedded applications, made compatible with the Microsoft .NET Framework 4.8. The target process usually does not require a restart before injecting an updated version of the assembly. Your unload method should destroy all allocated resources to prevent any memory leaks. Both x86 and x64 processes are supported. You can see an example implementation [here](https://github.com/winstxnhdw/rc15-hax/tree/master/rc15-hax/Scripts).
 
-#### This was a great Unity injector until that nasty process detection and x86/64 bug, now it's actually usable again. I still prefer my injector though, it uses syscalls he uses CreateRemoteThread that is noisy to Anti-Cheat products. I might be partial, but either way Warbler the original creator of SharpMonoInjector deserves credit for his work.
+## Requirements
 
-#### SharpMonoInjector is a tool for injecting assemblies into Mono embedded applications, commonly Unity Engine based games. The target process *usually* does not have to be restarted in order to inject an updated version of the assembly. Your unload method must destroy all of its resources (such as game objects).
+- Windows 10/11
+- [Microsoft .NET SDK](https://dotnet.microsoft.com/en-us/download)
+- [Microsoft .NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net48-developer-pack-offline-installer)
 
-#### SharpMonoInjector works by dynamically generating machine code, writing it to the target process and executing it using CreateRemoteThread. The code calls functions in the mono embedded API. The return value is obtained with ReadProcessMemory.
+## Concept
 
-#### Both x86 and x64 processes are supported.
+SharpMonoInjector works by dynamically generating machine code, writing it to the target process, and executing it using `CreateRemoteThread`. It calls functions within the Mono embedded API. The return value is obtained with `ReadProcessMemory`.
 
-#### In order for the injector to work, the load/unload (Unload isn't required, optional) methods need to match the following method signature:
+## Build
 
-####    static void Method()
+```bash
+dotnet build SharpMonoInjector.Console
+```
 
-# You can find the latest binary releases here: (https://www.unknowncheats.me/forum/unity/408878-sharpmonoinjector-fixed-updated.html), there is a console application and a GUI application available.
+## Usage
 
-![Screen](https://github.com/wh0am15533/SharpMonoInjector/blob/master/Images/ScreenFull.png)
+Inject
 
+```bash
+SharpMonoInjector4.8.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load
+```
 
-### Credit's to Original Project and Author: (https://github.com/warbler/SharpMonoInjector)
+```yaml
+Usage:
+SharpMonoInjector4.8.exe inject <options>
+
+Required arguments:
+-p      id or name of the target process
+-a      path of the assembly to inject
+-n      namespace in which the loader class resides
+-c      name of the loader class
+-m      name of the method to invoke in the loader class
+```
+
+Eject
+
+```bash
+SharpMonoInjector4.8.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload
+```
+
+```yaml
+Usage:
+SharpMonoInjector4.8.exe eject <options>
+
+Required arguments:
+-p      id or name of the target process
+-a      address of the assembly to eject
+-n      namespace in which the loader class resides
+-c      name of the loader class
+-m      name of the method to invoke in the loader class
+```
+
+## Submodule
+
+If you plan package this along with your cheats, I would recommend that you add this repository as a git submodule.
+
+```bash
+mkdir submodules
+git submodule add --depth 1 https://github.com/winstxnhdw/SharpMonoInjector4.8.git ./submodules
+git config -f .gitmodules submodule.submodules/SharpMonoInjector4.8.shallow true
+```
+
+To update your submodule later, simply run the following.
+
+```bash
+git submodule update --remote
+```
+
+## Troubleshoot
+
+When using this application, you may run into the following warnings.
+
+> Unable to clear the console. To fix this issue, please ensure that the output is not being redirected.
+
+This simply means that the console's output is being redirected elsewhere. Whether this was intentional or not, this warning is safe to ignore but it does hint some underlying issues you have with your CLI that you may be interested in fixing.
