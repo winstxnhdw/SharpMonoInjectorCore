@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 
-    <OutDir>../build</OutDir>
+    <OutDir>../bin</OutDir>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SharpMonoInjector</RootNamespace>
