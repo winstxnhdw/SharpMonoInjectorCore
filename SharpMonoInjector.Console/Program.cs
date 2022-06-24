@@ -4,7 +4,7 @@ using System.IO;
 namespace SharpMonoInjector.Console {
     internal static class Program {
         static void Main(string[] args) {
-            System.Console.WriteLine("\nSharpMonoInjector4.8");
+            System.Console.WriteLine("\nSharpMonoInjectorCore");
             if (args.Length == 0) PrintHelp();
 
             CommandLineArguments cla = new CommandLineArguments(args);
@@ -49,8 +49,8 @@ namespace SharpMonoInjector.Console {
                 "-c - The name of the loader class\n" +
                 "-m - The name of the method to invoke in the loader class\n\n" +
                 "Examples:\n" +
-                "SharpMonoInjector4.8.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load\n" +
-                "SharpMonoInjector4.8.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload\n";
+                "SharpMonoInjectorCore.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load\n" +
+                "SharpMonoInjectorCore.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload\n";
 
             if (!string.IsNullOrEmpty(additionalMessage)) System.Console.WriteLine(additionalMessage);
             System.Console.WriteLine(help);

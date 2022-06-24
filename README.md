@@ -1,12 +1,11 @@
-# SharpMonoInjector4.8
+# SharpMonoInjectorCore
 
-SharpMonoInjector4.8 is a tool for injecting assemblies into Mono embedded applications, made compatible with the Microsoft .NET Framework 4.8. The target process usually does not require a restart before injecting an updated version of the assembly. Your unload method should destroy all allocated resources to prevent any memory leaks. Both x86 and x64 processes are supported. You can see an example implementation [here](https://github.com/winstxnhdw/rc15-hax/tree/master/rc15-hax/Scripts).
+SharpMonoInjectorCore is a tool for injecting assemblies into Mono embedded applications, made compatible with the Microsoft .NET Core. The target process usually does not require a restart before injecting an updated version of the assembly. Your unload method should destroy all allocated resources to prevent any memory leaks. Both x86 and x64 processes are supported. You can see an example implementation [here](https://github.com/winstxnhdw/rc15-hax/tree/master/rc15-hax/Scripts).
 
 ## Requirements
 
 - Windows 10/11
 - [Microsoft .NET SDK](https://dotnet.microsoft.com/en-us/download)
-- [Microsoft .NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net48-developer-pack-offline-installer)
 
 ## Concept
 
@@ -23,12 +22,12 @@ dotnet build SharpMonoInjector.Console
 Inject
 
 ```bash
-SharpMonoInjector4.8.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load
+SharpMonoInjectorCore.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load
 ```
 
 ```yaml
 Usage:
-SharpMonoInjector4.8.exe inject <options>
+SharpMonoInjectorCore.exe inject <options>
 
 Required arguments:
 -p      id or name of the target process
@@ -41,12 +40,12 @@ Required arguments:
 Eject
 
 ```bash
-SharpMonoInjector4.8.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload
+SharpMonoInjectorCore.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload
 ```
 
 ```yaml
 Usage:
-SharpMonoInjector4.8.exe eject <options>
+SharpMonoInjectorCore.exe eject <options>
 
 Required arguments:
 -p      id or name of the target process
@@ -62,8 +61,8 @@ If you plan package this along with your cheats, I would recommend that you add 
 
 ```bash
 mkdir submodules
-git submodule add --depth 1 https://github.com/winstxnhdw/SharpMonoInjector4.8.git ./submodules
-git config -f .gitmodules submodule.submodules/SharpMonoInjector4.8.shallow true
+git submodule add --depth 1 https://github.com/winstxnhdw/SharpMonoInjectorCore.git ./submodules
+git config -f .gitmodules submodule.submodules/SharpMonoInjectorCore.shallow true
 ```
 
 To update your submodule later, simply run the following.
