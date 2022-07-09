@@ -2,14 +2,21 @@
 
   <PropertyGroup>
 
-    <OutDir>../bin</OutDir>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <PublishDir>../bin</PublishDir>
+    <OutputType>exe</OutputType>
     <RootNamespace>SharpMonoInjector</RootNamespace>
     <AssemblyName>SharpMonoInjector</AssemblyName>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetFramework>net6.0-windows</TargetFramework>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <Deterministic>true</Deterministic>
-    
+
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="6.0.0" />
+  </ItemGroup>
 
 </Project>
