@@ -89,23 +89,12 @@ namespace SharpMonoInjector {
             try {
                 if (!Environment.Is64BitOperatingSystem) return false;
 
-                string OSVer = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion", "ProductName", null);
-
-                if (OSVer.Contains("Windows 10")) {
-                    if (handle != IntPtr.Zero) {
-                        ushort pMachine = 0;
-                        // Check if the process is running on a 64-bit machine
-                        IsWow64Process2(handle, out pMachine, out _);
-                        return pMachine == 332 ? false : true;
-                    }
+                if (handle != IntPtr.Zero) {
+                    ushort pMachine = 0;
+                    // Check if the process is running on a 64-bit machine
+                    IsWow64Process2(handle, out pMachine, out _);
+                    return pMachine == 332 ? false : true;
                 }
-
-                #region[Win7]
-
-                IsWow64Process(handle, out bool isTargetWOWx64);
-                return isTargetWOWx64 ? false : true;
-
-                #endregion
             }
 
             catch (Exception ex) {

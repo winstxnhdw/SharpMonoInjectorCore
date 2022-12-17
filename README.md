@@ -28,15 +28,19 @@ SharpMonoInjector.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c L
 ```
 
 ```yaml
-Usage:
-SharpMonoInjector.exe inject <options>
+Description:
+  Injects a managed assembly into a process
 
-Required arguments:
--p      id or name of the target process
--a      path of the assembly to inject
--n      namespace in which the loader class resides
--c      name of the loader class
--m      name of the method to invoke in the loader class
+Usage:
+  SharpMonoInjector inject [options]
+
+Options:
+  -a, --assembly <assembly>    Path of the assembly to inject []
+  -p, --process <process>      Name of the target process []
+  -n, --namespace <namespace>  Namespace in which the loader class resides []
+  -c, --class <class>          Name of the loader class ["Loader"]
+  -m, --method <method>        Name of the method to invoke in the loader class ["Unload"]
+  -?, -h, --help               Show help and usage information
 ```
 
 Eject
@@ -46,15 +50,19 @@ SharpMonoInjector.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Load
 ```
 
 ```yaml
-Usage:
-SharpMonoInjector.exe eject <options>
+Description:
+  Ejects a managed assembly from a process
 
-Required arguments:
--p      id or name of the target process
--a      address of the assembly to eject
--n      namespace in which the loader class resides
--c      name of the loader class
--m      name of the method to invoke in the loader class
+Usage:
+  SharpMonoInjector eject [options]
+
+Options:
+  -a, --address <address>      Address of the assembly to eject [0]
+  -p, --process <process>      Name of the target process []
+  -n, --namespace <namespace>  Namespace in which the loader class resides []
+  -c, --class <class>          Name of the loader class ["Loader"]
+  -m, --method <method>        Name of the method to invoke in the loader class ["Unload"]
+  -?, -h, --help               Show help and usage information
 ```
 
 ## Submodule

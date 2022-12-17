@@ -69,31 +69,26 @@ public class Injector : IDisposable {
         _memory = new Memory(_handle);
     }
 
-    public Injector(int processId) {
-        Process process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
+    // public Injector(int processId) {
+    //     Process process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 
-        if (process == null)
-            throw new InjectorException($"Could not find a process with the id {processId}");
+    //     if (process == null)
+    //         throw new InjectorException($"Could not find a process with the id {processId}");
 
-        if ((_handle = Native.OpenProcess(ProcessAccessRights.PROCESS_ALL_ACCESS, false, process.Id)) == IntPtr.Zero)
-            throw new InjectorException("Failed to open process", new Win32Exception(Marshal.GetLastWin32Error()));
+    //     if ((_handle = Native.OpenProcess(ProcessAccessRights.PROCESS_ALL_ACCESS, false, process.Id)) == IntPtr.Zero)
+    //         throw new InjectorException("Failed to open process", new Win32Exception(Marshal.GetLastWin32Error()));
 
-        Is64Bit = ProcessUtils.Is64BitProcess(_handle);
+    //     Is64Bit = ProcessUtils.Is64BitProcess(_handle);
 
-        if (!ProcessUtils.GetMonoModule(_handle, out _mono))
-            throw new InjectorException("Failed to find mono.dll in the target process");
+    //     if (!ProcessUtils.GetMonoModule(_handle, out _mono))
+    //         throw new InjectorException("Failed to find mono.dll in the target process");
 
-        _memory = new Memory(_handle);
-    }
+    //     _memory = new Memory(_handle);
+    // }
 
     public Injector(IntPtr processHandle, IntPtr monoModule) {
-        if ((_handle = processHandle) == IntPtr.Zero) {
-            throw new ArgumentException("Argument cannot be zero", nameof(processHandle));
-        }
-
-        if ((_mono = monoModule) == IntPtr.Zero) {
-            throw new ArgumentException("Argument cannot be zero", nameof(monoModule));
-        }
+        if ((_handle = processHandle) == IntPtr.Zero) throw new ArgumentException("Argument cannot be zero", nameof(processHandle));
+        if ((_mono = monoModule) == IntPtr.Zero) throw new ArgumentException("Argument cannot be zero", nameof(monoModule));
 
         Is64Bit = ProcessUtils.Is64BitProcess(_handle);
         _memory = new Memory(_handle);
@@ -118,11 +113,8 @@ public class Injector : IDisposable {
 
     public IntPtr Inject(byte[] rawAssembly, string @namespace, string className, string methodName) {
         if (rawAssembly == null) throw new ArgumentNullException(nameof(rawAssembly));
-
         if (rawAssembly.Length == 0) throw new ArgumentException($"{nameof(rawAssembly)} cannot be empty", nameof(rawAssembly));
-
         if (className == null) throw new ArgumentNullException(nameof(className));
-
         if (methodName == null) throw new ArgumentNullException(nameof(methodName));
 
         IntPtr rawImage, assembly, image, @class, method;
@@ -141,9 +133,7 @@ public class Injector : IDisposable {
 
     public void Eject(IntPtr assembly, string @namespace, string className, string methodName) {
         if (assembly == IntPtr.Zero) throw new ArgumentException($"{nameof(assembly)} cannot be zero", nameof(assembly));
-
         if (className == null) throw new ArgumentNullException(nameof(className));
-
         if (methodName == null) throw new ArgumentNullException(nameof(methodName));
 
         IntPtr image, @class, method;
@@ -273,9 +263,7 @@ public class Injector : IDisposable {
         return ret;
     }
 
-    byte[] Assemble(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) {
-        return Is64Bit ? Assemble64(functionPtr, retValPtr, args) : Assemble86(functionPtr, retValPtr, args);
-    }
+    byte[] Assemble(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) => Is64Bit ? Assemble64(functionPtr, retValPtr, args) : Assemble86(functionPtr, retValPtr, args);
 
     byte[] Assemble86(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) {
         Assembler asm = new Assembler();

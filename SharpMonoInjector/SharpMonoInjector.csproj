@@ -14,7 +14,14 @@
 
   </PropertyGroup>
 
+  <Target Name="CleanBeforeRestore" BeforeTargets="Restore">
+    <RemoveDir Directories="$(BaseIntermediateOutputPath)" />
+    <RemoveDir Directories="$(BaseOutputPath)" />
+    <RemoveDir Directories="$(PublishDir)" />
+  </Target>
+
   <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
 
