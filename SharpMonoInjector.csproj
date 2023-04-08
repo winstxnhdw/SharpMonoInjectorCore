@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 
-    <PublishDir>../bin</PublishDir>
+    <PublishDir>dist</PublishDir>
     <OutputType>exe</OutputType>
     <RootNamespace>SharpMonoInjector</RootNamespace>
     <AssemblyName>SharpMonoInjector</AssemblyName>
