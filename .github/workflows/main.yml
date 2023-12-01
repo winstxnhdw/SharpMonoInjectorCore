@@ -3,8 +3,10 @@ name: Build
 on:
   push:
     paths:
-      - Scripts/**
       - .github/workflows/main.yml
+      - Scripts/**
+      - '*.csproj'
+
 
 jobs:
   build:
