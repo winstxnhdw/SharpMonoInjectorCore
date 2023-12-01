@@ -1,15 +1,15 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      time: "18:00"
-      timezone: "Asia/Singapore"
+      interval: weekly
+      time: '18:00'
+      timezone: Asia/Singapore
 
-  - package-ecosystem: "nuget"
-    directory: "/"
+  - package-ecosystem: nuget
+    directory: /
     schedule:
-      interval: "daily"
-      time: "18:00"
-      timezone: "Asia/Singapore"
+      interval: daily
+      time: '18:00'
+      timezone: Asia/Singapore
