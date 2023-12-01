@@ -17,26 +17,25 @@ public static class ProcessUtils {
     public static extern bool IsWow64Process(IntPtr hProcess, out bool wow64Process);
 
     public static IEnumerable<ExportedFunction> GetExportedFunctions(IntPtr handle, IntPtr mod) {
-        using (Memory memory = new Memory(handle)) {
-            int e_lfanew = memory.ReadInt(mod + 0x3C);
-            IntPtr ntHeaders = mod + e_lfanew;
-            IntPtr optionalHeader = ntHeaders + 0x18;
-            IntPtr dataDirectory = optionalHeader + (Is64BitProcess(handle) ? 0x70 : 0x60);
-            IntPtr exportDirectory = mod + memory.ReadInt(dataDirectory);
-            IntPtr names = mod + memory.ReadInt(exportDirectory + 0x20);
-            IntPtr ordinals = mod + memory.ReadInt(exportDirectory + 0x24);
-            IntPtr functions = mod + memory.ReadInt(exportDirectory + 0x1C);
-            int count = memory.ReadInt(exportDirectory + 0x18);
+        using Memory memory = new(handle);
+        int e_lfanew = memory.ReadInt(mod + 0x3C);
+        IntPtr ntHeaders = mod + e_lfanew;
+        IntPtr optionalHeader = ntHeaders + 0x18;
+        IntPtr dataDirectory = optionalHeader + (Is64BitProcess(handle) ? 0x70 : 0x60);
+        IntPtr exportDirectory = mod + memory.ReadInt(dataDirectory);
+        IntPtr names = mod + memory.ReadInt(exportDirectory + 0x20);
+        IntPtr ordinals = mod + memory.ReadInt(exportDirectory + 0x24);
+        IntPtr functions = mod + memory.ReadInt(exportDirectory + 0x1C);
+        int count = memory.ReadInt(exportDirectory + 0x18);
 
-            for (int i = 0; i < count; i++) {
-                int offset = memory.ReadInt(names + i * 4);
-                string name = memory.ReadString(mod + offset, 32, Encoding.ASCII);
-                short ordinal = memory.ReadShort(ordinals + i * 2);
-                IntPtr address = mod + memory.ReadInt(functions + ordinal * 4);
+        for (int i = 0; i < count; i++) {
+            int offset = memory.ReadInt(names + (i * 4));
+            string name = memory.ReadString(mod + offset, 32, Encoding.ASCII);
+            short ordinal = memory.ReadShort(ordinals + (i * 2));
+            IntPtr address = mod + memory.ReadInt(functions + (ordinal * 4));
 
-                if (address != IntPtr.Zero) {
-                    yield return new ExportedFunction(name, address);
-                }
+            if (address != IntPtr.Zero) {
+                yield return new ExportedFunction(name, address);
             }
         }
     }
@@ -92,8 +91,8 @@ public static class ProcessUtils {
             if (handle != IntPtr.Zero) {
                 ushort pMachine = 0;
                 // Check if the process is running on a 64-bit machine
-                IsWow64Process2(handle, out pMachine, out _);
-                return pMachine == 332 ? false : true;
+                _ = IsWow64Process2(handle, out pMachine, out _);
+                return pMachine != 332;
             }
         }
 
