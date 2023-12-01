@@ -85,3 +85,4 @@ git submodule update --remote
 
 - [rc15-hax](https://github.com/winstxnhdw/rc15-hax)
 - [raft-hax](https://github.com/winstxnhdw/raft-hax)
+- [rc15-hax](https://github.com/winstxnhdw/valheim-hax)
