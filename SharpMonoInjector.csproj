@@ -7,7 +7,7 @@
     <RootNamespace>SharpMonoInjector</RootNamespace>
     <AssemblyName>SharpMonoInjector</AssemblyName>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <PublishReadyToRun>true</PublishReadyToRun>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
