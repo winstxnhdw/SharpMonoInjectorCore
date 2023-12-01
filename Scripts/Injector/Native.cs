@@ -6,8 +6,8 @@ namespace SharpMonoInjector;
 [StructLayout(LayoutKind.Sequential)]
 public struct MODULEINFO {
     public IntPtr lpBaseOfDll;
-    public IntPtr EntryPoint;
-    public int SizeOfImage;
+    public IntPtr entryPoint;
+    public int sizeOfImage;
 }
 
 public enum ModuleFilter : uint {
@@ -39,7 +39,7 @@ public enum MemoryProtection {
     PAGE_READWRITE = 0x4,
     PAGE_WRITECOPY = 0x8,
     PAGE_TARGETS_INVALID = 0x40000000,
-    PAGE_TARGETS_NO_UPDATE = 0x40000000,
+    PAGE_TARGETS_NO_UPDATE = PAGE_TARGETS_INVALID,
     PAGE_GUARD = 0x100,
     PAGE_NOCACHE = 0x200,
     PAGE_WRITECOMBINE = 0x400

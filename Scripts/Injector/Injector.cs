@@ -49,7 +49,8 @@ public class Injector : IDisposable {
     public bool Is64Bit { get; set; }
 
     public Injector(string processName) {
-        if (processName.EndsWith(".exe")) { processName.Replace(".exe", ""); }
+        processName = processName.EndsWith(".exe") ? processName.Replace(".exe", "") : processName;
+
         Process process = Process.GetProcesses().FirstOrDefault(p => p.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase));
 
         if (process == null) {
@@ -101,7 +102,7 @@ public class Injector : IDisposable {
 
     void ObtainMonoExports() {
         foreach (ExportedFunction ef in ProcessUtils.GetExportedFunctions(_handle, _mono)) {
-            if (Exports.ContainsKey(ef.Name)) Exports[ef.Name] = ef.Address;
+            if (Exports.ContainsKey(ef.name)) Exports[ef.name] = ef.address;
         }
 
         foreach (KeyValuePair<string, IntPtr> kvp in Exports) {
