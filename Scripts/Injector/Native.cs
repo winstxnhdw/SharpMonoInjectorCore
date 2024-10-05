@@ -94,7 +94,9 @@ public static class Native {
     public static extern bool EnumProcessModulesEx(IntPtr hProcess, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.U4)][In][Out] IntPtr[] lphModule, int cb, [MarshalAs(UnmanagedType.U4)] out int lpcbNeeded, ModuleFilter dwFilterFlag);
 
     [DllImport("psapi.dll")]
+#pragma warning disable CA1838 // Avoid 'StringBuilder' parameters for P/Invokes
     public static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In][MarshalAs(UnmanagedType.U4)] uint nSize);
+#pragma warning restore CA1838 // Avoid 'StringBuilder' parameters for P/Invokes
 
     [DllImport("psapi.dll", SetLastError = true)]
     public static extern bool GetModuleInformation(IntPtr hProcess, IntPtr hModule, out MODULEINFO lpmodinfo, uint cb);
