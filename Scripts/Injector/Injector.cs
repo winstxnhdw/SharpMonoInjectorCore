@@ -20,7 +20,7 @@ public class Injector : IDisposable {
     const string mono_object_get_class = "mono_object_get_class";
     const string mono_class_get_name = "mono_class_get_name";
 
-    Dictionary<string, IntPtr> Exports { get; } = new Dictionary<string, IntPtr> {
+    readonly Dictionary<string, IntPtr> Exports = new() {
         { mono_get_root_domain, IntPtr.Zero },
         { mono_thread_attach, IntPtr.Zero },
         { mono_image_open_from_data, IntPtr.Zero },
@@ -34,15 +34,11 @@ public class Injector : IDisposable {
         { mono_class_get_name, IntPtr.Zero }
     };
 
-    Memory memory;
-
-    IntPtr rootDomain;
-
-    bool attach;
-
+    readonly Memory memory;
     readonly IntPtr handle;
-
-    IntPtr mono;
+    readonly IntPtr mono;
+    IntPtr rootDomain;
+    bool attach;
 
     public Injector(string processName) {
         processName = processName.EndsWith(".exe") ? processName.Replace(".exe", "") : processName;
@@ -52,7 +48,7 @@ public class Injector : IDisposable {
                    .FirstOrDefault(p => p.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase))
                     ?? throw new InjectorException($"Could not find a process with the name {processName}");
 
-        if ((this.handle = Native.OpenProcess(ProcessAccessRights.PROCESS_ALL_ACCESS, false, process.Id)) == IntPtr.Zero) {
+        if ((this.handle = Native.OpenProcess(Native.PROCESS_ALL_ACCESS, false, process.Id)) == IntPtr.Zero) {
             throw new InjectorException("Failed to open process", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
@@ -93,16 +89,14 @@ public class Injector : IDisposable {
         if (rawAssembly.Length == 0) throw new ArgumentException($"{nameof(rawAssembly)} cannot be empty", nameof(rawAssembly));
         if (className == null) throw new ArgumentNullException(nameof(className));
 
-        IntPtr rawImage, assembly, image, @class, method;
-
         this.ObtainMonoExports();
         this.rootDomain = this.GetRootDomain();
-        rawImage = this.OpenImageFromData(rawAssembly);
+        IntPtr rawImage = this.OpenImageFromData(rawAssembly);
         this.attach = true;
-        assembly = this.OpenAssemblyFromImage(rawImage);
-        image = this.GetImageFromAssembly(assembly);
-        @class = this.GetClassFromName(image, @namespace, className);
-        method = this.GetMethodFromName(@class, "Load");
+        IntPtr assembly = this.OpenAssemblyFromImage(rawImage);
+        IntPtr image = this.GetImageFromAssembly(assembly);
+        IntPtr @class = this.GetClassFromName(image, @namespace, className);
+        IntPtr method = this.GetMethodFromName(@class, "Load");
         this.RuntimeInvoke(method);
         return assembly;
     }
@@ -203,10 +197,10 @@ public class Injector : IDisposable {
         if (thread == IntPtr.Zero)
             throw new InjectorException("Failed to create a remote thread", new Win32Exception(Marshal.GetLastWin32Error()));
 
-        WaitResult result = Native.WaitForSingleObject(thread, -1);
+        uint result = Native.WaitForSingleObject(thread, -1);
         Native.CloseHandle(thread);
 
-        if (result == WaitResult.WAIT_FAILED)
+        if (result == Native.WAIT_FAILED)
             throw new InjectorException("Failed to wait for a remote thread", new Win32Exception(Marshal.GetLastWin32Error()));
 
         IntPtr ret = (IntPtr)this.memory.ReadLong(retValPtr);

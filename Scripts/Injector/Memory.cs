@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.ComponentModel;
 using System.Collections.Generic;
@@ -7,14 +7,14 @@ using System.Runtime.InteropServices;
 namespace SharpMonoInjector;
 public class Memory : IDisposable {
     readonly IntPtr _handle;
-    readonly Dictionary<IntPtr, int> _allocations = new Dictionary<IntPtr, int>();
+    readonly List<IntPtr> _allocations = [];
 
     public Memory(IntPtr processHandle) {
         this._handle = processHandle;
     }
 
     public string ReadString(IntPtr address, int length, Encoding encoding) {
-        List<byte> bytes = new List<byte>();
+        List<byte> bytes = [];
 
         for (int i = 0; i < length; i++) {
             byte read = this.ReadBytes(address + bytes.Count, 1)[0];
@@ -24,7 +24,7 @@ public class Memory : IDisposable {
             bytes.Add(read);
         }
 
-        return encoding.GetString(bytes.ToArray());
+        return encoding.GetString([.. bytes]);
     }
 
     public string ReadUnicodeString(IntPtr address, int length) => Encoding.Unicode.GetString(this.ReadBytes(address, length));
@@ -53,18 +53,16 @@ public class Memory : IDisposable {
 
     public IntPtr AllocateAndWrite(string data) => this.AllocateAndWrite(Encoding.UTF8.GetBytes(data));
 
-    public IntPtr AllocateAndWrite(int data) => this.AllocateAndWrite(BitConverter.GetBytes(data));
-
     public IntPtr AllocateAndWrite(long data) => this.AllocateAndWrite(BitConverter.GetBytes(data));
 
     public IntPtr Allocate(int size) {
-        IntPtr addr = Native.VirtualAllocEx(this._handle, IntPtr.Zero, size, AllocationType.MEM_COMMIT, MemoryProtection.PAGE_EXECUTE_READWRITE);
+        IntPtr addr = Native.VirtualAllocEx(this._handle, IntPtr.Zero, size, Native.MEM_COMMIT, Native.PAGE_EXECUTE_READWRITE);
 
         if (addr == IntPtr.Zero) {
             throw new InjectorException("Failed to allocate process memory", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
-        this._allocations.Add(addr, size);
+        this._allocations.Add(addr);
         return addr;
     }
 
@@ -74,6 +72,6 @@ public class Memory : IDisposable {
     }
 
     public void Dispose() {
-        foreach (var kvp in this._allocations) Native.VirtualFreeEx(this._handle, kvp.Key, 0, MemoryFreeType.MEM_RELEASE);
+        foreach (IntPtr addr in this._allocations) Native.VirtualFreeEx(this._handle, addr, 0, Native.MEM_RELEASE);
     }
 }

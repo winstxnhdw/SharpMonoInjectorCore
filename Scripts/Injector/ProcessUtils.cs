@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
@@ -36,21 +35,21 @@ public static class ProcessUtils {
     public static bool GetMonoModule(IntPtr handle, out IntPtr monoModule) {
         IntPtr[] ptrs = [];
 
-        if (!Native.EnumProcessModulesEx(handle, ptrs, 0, out int bytesNeeded, ModuleFilter.LIST_MODULES_ALL)) {
+        if (!Native.EnumProcessModulesEx(handle, ptrs, 0, out int bytesNeeded, Native.LIST_MODULES_ALL)) {
             throw new InjectorException("Failed to enumerate process modules", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
         int count = bytesNeeded / 8;
         ptrs = new IntPtr[count];
 
-        if (!Native.EnumProcessModulesEx(handle, ptrs, bytesNeeded, out bytesNeeded, ModuleFilter.LIST_MODULES_ALL)) {
+        if (!Native.EnumProcessModulesEx(handle, ptrs, bytesNeeded, out bytesNeeded, Native.LIST_MODULES_ALL)) {
             throw new InjectorException("Failed to enumerate process modules", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
         for (int i = 0; i < count; i++) {
             try {
                 StringBuilder path = new(260);
-                _ = Native.GetModuleFileNameEx(handle, ptrs[i], path, 260);
+                Native.GetModuleFileNameEx(handle, ptrs[i], path, 260);
 
                 if (path.ToString().IndexOf("mono", StringComparison.OrdinalIgnoreCase) > -1) {
                     if (!Native.GetModuleInformation(handle, ptrs[i], out MODULEINFO info, (uint)Marshal.SizeOf<MODULEINFO>())) {
@@ -67,7 +66,7 @@ public static class ProcessUtils {
             }
 
             catch (Exception ex) {
-                File.AppendAllText($"{AppDomain.CurrentDomain.BaseDirectory}\\DebugLog.txt", $"[ProcessUtils] GetMono - ERROR: {ex.Message}\r\n");
+                Console.Error.WriteLine($"[ProcessUtils] GetMono - ERROR: {ex.Message}");
             }
         }
 
