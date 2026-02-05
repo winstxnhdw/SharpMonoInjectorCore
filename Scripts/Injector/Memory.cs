@@ -74,6 +74,6 @@ public class Memory : IDisposable {
     }
 
     public void Dispose() {
-        foreach (var kvp in this._allocations) Native.VirtualFreeEx(this._handle, kvp.Key, kvp.Value, MemoryFreeType.MEM_DECOMMIT);
+        foreach (var kvp in this._allocations) Native.VirtualFreeEx(this._handle, kvp.Key, 0, MemoryFreeType.MEM_RELEASE);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
@@ -16,7 +16,6 @@ public class Injector : IDisposable {
     const string mono_class_from_name = "mono_class_from_name";
     const string mono_class_get_method_from_name = "mono_class_get_method_from_name";
     const string mono_runtime_invoke = "mono_runtime_invoke";
-    const string mono_assembly_close = "mono_assembly_close";
     const string mono_image_strerror = "mono_image_strerror";
     const string mono_object_get_class = "mono_object_get_class";
     const string mono_class_get_name = "mono_class_get_name";
@@ -30,7 +29,6 @@ public class Injector : IDisposable {
         { mono_class_from_name, IntPtr.Zero },
         { mono_class_get_method_from_name, IntPtr.Zero },
         { mono_runtime_invoke, IntPtr.Zero },
-        { mono_assembly_close, IntPtr.Zero },
         { mono_image_strerror, IntPtr.Zero },
         { mono_object_get_class, IntPtr.Zero },
         { mono_class_get_name, IntPtr.Zero }
@@ -46,8 +44,6 @@ public class Injector : IDisposable {
 
     IntPtr mono;
 
-    public bool Is64Bit { get; set; }
-
     public Injector(string processName) {
         processName = processName.EndsWith(".exe") ? processName.Replace(".exe", "") : processName;
 
@@ -60,43 +56,24 @@ public class Injector : IDisposable {
             throw new InjectorException("Failed to open process", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
-        this.Is64Bit = ProcessUtils.Is64BitProcess(this.handle);
-
         if (!ProcessUtils.GetMonoModule(this.handle, out this.mono)) {
+            Native.CloseHandle(this.handle);
             throw new InjectorException("Failed to find mono.dll in the target process");
         }
 
         this.memory = new Memory(this.handle);
     }
 
-    // public Injector(int processId) {
-    //     Process process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
-
-    //     if (process == null)
-    //         throw new InjectorException($"Could not find a process with the id {processId}");
-
-    //     if ((_handle = Native.OpenProcess(ProcessAccessRights.PROCESS_ALL_ACCESS, false, process.Id)) == IntPtr.Zero)
-    //         throw new InjectorException("Failed to open process", new Win32Exception(Marshal.GetLastWin32Error()));
-
-    //     Is64Bit = ProcessUtils.Is64BitProcess(_handle);
-
-    //     if (!ProcessUtils.GetMonoModule(_handle, out _mono))
-    //         throw new InjectorException("Failed to find mono.dll in the target process");
-
-    //     _memory = new Memory(_handle);
-    // }
-
     public Injector(IntPtr processHandle, IntPtr monoModule) {
         if ((this.handle = processHandle) == IntPtr.Zero) throw new ArgumentException("Argument cannot be zero", nameof(processHandle));
         if ((this.mono = monoModule) == IntPtr.Zero) throw new ArgumentException("Argument cannot be zero", nameof(monoModule));
 
-        this.Is64Bit = ProcessUtils.Is64BitProcess(this.handle);
         this.memory = new Memory(this.handle);
     }
 
     public void Dispose() {
         this.memory.Dispose();
-        _ = Native.CloseHandle(this.handle);
+        Native.CloseHandle(this.handle);
     }
 
     void ObtainMonoExports() {
@@ -111,11 +88,10 @@ public class Injector : IDisposable {
         }
     }
 
-    public IntPtr Inject(byte[] rawAssembly, string @namespace, string className, string methodName) {
+    public IntPtr Inject(byte[] rawAssembly, string @namespace, string className) {
         if (rawAssembly == null) throw new ArgumentNullException(nameof(rawAssembly));
         if (rawAssembly.Length == 0) throw new ArgumentException($"{nameof(rawAssembly)} cannot be empty", nameof(rawAssembly));
         if (className == null) throw new ArgumentNullException(nameof(className));
-        if (methodName == null) throw new ArgumentNullException(nameof(methodName));
 
         IntPtr rawImage, assembly, image, @class, method;
 
@@ -126,26 +102,9 @@ public class Injector : IDisposable {
         assembly = this.OpenAssemblyFromImage(rawImage);
         image = this.GetImageFromAssembly(assembly);
         @class = this.GetClassFromName(image, @namespace, className);
-        method = this.GetMethodFromName(@class, methodName);
+        method = this.GetMethodFromName(@class, "Load");
         this.RuntimeInvoke(method);
         return assembly;
-    }
-
-    public void Eject(IntPtr assembly, string @namespace, string className, string methodName) {
-        if (assembly == IntPtr.Zero) throw new ArgumentException($"{nameof(assembly)} cannot be zero", nameof(assembly));
-        if (className == null) throw new ArgumentNullException(nameof(className));
-        if (methodName == null) throw new ArgumentNullException(nameof(methodName));
-
-        IntPtr image, @class, method;
-
-        this.ObtainMonoExports();
-        this.rootDomain = this.GetRootDomain();
-        this.attach = true;
-        image = this.GetImageFromAssembly(assembly);
-        @class = this.GetClassFromName(image, @namespace, className);
-        method = this.GetMethodFromName(@class, methodName);
-        this.RuntimeInvoke(method);
-        this.CloseAssembly(assembly);
     }
 
     static void ThrowIfNull(IntPtr ptr, string methodName) {
@@ -216,30 +175,25 @@ public class Injector : IDisposable {
     }
 
     string ReadMonoString(IntPtr monoString) {
-        int len = this.memory.ReadInt(monoString + (this.Is64Bit ? 0x10 : 0x8));
-        return this.memory.ReadUnicodeString(monoString + (this.Is64Bit ? 0x14 : 0xC), len * 2);
+        int len = this.memory.ReadInt(monoString + 0x10);
+        return this.memory.ReadUnicodeString(monoString + 0x14, len * 2);
     }
 
     void RuntimeInvoke(IntPtr method) {
-        IntPtr excPtr = this.Is64Bit ? this.memory.AllocateAndWrite((long)0) : this.memory.AllocateAndWrite(0);
-        _ = this.Execute(this.Exports[mono_runtime_invoke], method, IntPtr.Zero, IntPtr.Zero, excPtr);
+        IntPtr excPtr = this.memory.AllocateAndWrite((long)0);
+        this.Execute(this.Exports[mono_runtime_invoke], method, IntPtr.Zero, IntPtr.Zero, excPtr);
 
-        IntPtr exc = this.memory.ReadInt(excPtr);
+        IntPtr exc = (IntPtr)this.memory.ReadLong(excPtr);
 
         if (exc != IntPtr.Zero) {
             string className = this.GetClassName(exc);
-            string message = this.ReadMonoString(this.memory.ReadInt(exc + (this.Is64Bit ? 0x20 : 0x10)));
+            string message = this.ReadMonoString((IntPtr)this.memory.ReadLong(exc + 0x20));
             throw new InjectorException($"The managed method threw an exception: ({className}) {message}");
         }
     }
 
-    void CloseAssembly(IntPtr assembly) {
-        IntPtr result = this.Execute(this.Exports[mono_assembly_close], assembly);
-        ThrowIfNull(result, mono_assembly_close);
-    }
-
     IntPtr Execute(IntPtr address, params IntPtr[] args) {
-        IntPtr retValPtr = this.Is64Bit ? this.memory.AllocateAndWrite((long)0) : this.memory.AllocateAndWrite(0);
+        IntPtr retValPtr = this.memory.AllocateAndWrite((long)0);
 
         byte[] code = this.Assemble(address, retValPtr, args);
         IntPtr alloc = this.memory.AllocateAndWrite(code);
@@ -250,41 +204,19 @@ public class Injector : IDisposable {
             throw new InjectorException("Failed to create a remote thread", new Win32Exception(Marshal.GetLastWin32Error()));
 
         WaitResult result = Native.WaitForSingleObject(thread, -1);
+        Native.CloseHandle(thread);
 
         if (result == WaitResult.WAIT_FAILED)
             throw new InjectorException("Failed to wait for a remote thread", new Win32Exception(Marshal.GetLastWin32Error()));
 
-        IntPtr ret = this.Is64Bit ? (IntPtr)this.memory.ReadLong(retValPtr) : this.memory.ReadInt(retValPtr);
+        IntPtr ret = (IntPtr)this.memory.ReadLong(retValPtr);
 
         return ret == 0x00000000C0000005
             ? throw new InjectorException($"An access violation occurred while executing {this.Exports.First(e => e.Value == address).Key}()")
             : ret;
     }
 
-    byte[] Assemble(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) => this.Is64Bit ? this.Assemble64(functionPtr, retValPtr, args) : this.Assemble86(functionPtr, retValPtr, args);
-
-    byte[] Assemble86(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) {
-        Assembler asm = new();
-
-        if (this.attach) {
-            asm.Push(this.rootDomain);
-            asm.MovEax(this.Exports[mono_thread_attach]);
-            asm.CallEax();
-            asm.AddEsp(4);
-        }
-
-        for (int i = args.Length - 1; i >= 0; i--) asm.Push(args[i]);
-
-        asm.MovEax(functionPtr);
-        asm.CallEax();
-        asm.AddEsp((byte)(args.Length * 4));
-        asm.MovEaxTo(retValPtr);
-        asm.Return();
-
-        return asm.ToByteArray();
-    }
-
-    byte[] Assemble64(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) {
+    byte[] Assemble(IntPtr functionPtr, IntPtr retValPtr, IntPtr[] args) {
         Assembler asm = new();
 
         asm.SubRsp(40);

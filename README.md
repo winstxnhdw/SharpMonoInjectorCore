@@ -4,7 +4,7 @@
 [![CodeQL](https://github.com/winstxnhdw/SharpMonoInjectorCore/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/winstxnhdw/SharpMonoInjectorCore/actions/workflows/github-code-scanning/codeql)
 [![auto-merge.yml](https://github.com/winstxnhdw/SharpMonoInjectorCore/actions/workflows/auto-merge.yml/badge.svg)](https://github.com/winstxnhdw/SharpMonoInjectorCore/actions/workflows/auto-merge.yml)
 
-SharpMonoInjectorCore is a tool for injecting assemblies into Mono embedded applications, made compatible with Microsoft .NET Core. The target process may require a restart before injecting an updated version of the assembly. Your unload method should destroy all allocated resources to prevent any memory leaks. Both x86 and x64 processes are supported. You can see an example implementation [here](https://github.com/winstxnhdw/rc15-hax/blob/master/rc15-hax/Scripts/Loader.cs).
+SharpMonoInjectorCore is a tool for injecting assemblies into Mono embedded applications, made compatible with Microsoft .NET Core. The target process may require a restart before injecting an updated version of the assembly. Only x64 processes are supported. You can see an example implementation [here](https://github.com/winstxnhdw/rc15-hax/blob/master/rc15-hax/Scripts/Loader.cs).
 
 ## Requirements
 
@@ -23,10 +23,8 @@ dotnet publish
 
 ## Usage
 
-Inject
-
 ```bash
-SharpMonoInjector.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader -m Load
+SharpMonoInjector.exe inject -p RobocraftClient -a rc15-hax.dll -n RC15_HAX -c Loader
 ```
 
 ```yaml
@@ -41,29 +39,6 @@ Options:
   -p, --process <process>      Name of the target process []
   -n, --namespace <namespace>  Namespace in which the loader class resides []
   -c, --class <class>          Name of the loader class ["Loader"]
-  -m, --method <method>        Name of the method to invoke in the loader class ["Unload"]
-  -?, -h, --help               Show help and usage information
-```
-
-Eject
-
-```bash
-SharpMonoInjector.exe eject -p RobocraftClient -a 0x13D23A98 -n RC15_HAX -c Loader -m Unload
-```
-
-```yaml
-Description:
-  Ejects a managed assembly from a process
-
-Usage:
-  SharpMonoInjector eject [options]
-
-Options:
-  -a, --address <address>      Address of the assembly to eject [0]
-  -p, --process <process>      Name of the target process []
-  -n, --namespace <namespace>  Namespace in which the loader class resides []
-  -c, --class <class>          Name of the loader class ["Loader"]
-  -m, --method <method>        Name of the method to invoke in the loader class ["Unload"]
   -?, -h, --help               Show help and usage information
 ```
 

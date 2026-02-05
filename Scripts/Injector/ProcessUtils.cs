@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,19 +9,12 @@ using System.Runtime.InteropServices;
 namespace SharpMonoInjector;
 
 public static class ProcessUtils {
-    [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    static extern bool IsWow64Process2([In] IntPtr hProcess, [Out] out ushort processMachine, [Out] out ushort nativeMachine);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern bool IsWow64Process(IntPtr hProcess, out bool wow64Process);
-
     public static IEnumerable<ExportedFunction> GetExportedFunctions(IntPtr handle, IntPtr mod) {
         using Memory memory = new(handle);
         int e_lfanew = memory.ReadInt(mod + 0x3C);
         IntPtr ntHeaders = mod + e_lfanew;
         IntPtr optionalHeader = ntHeaders + 0x18;
-        IntPtr dataDirectory = optionalHeader + (Is64BitProcess(handle) ? 0x70 : 0x60);
+        IntPtr dataDirectory = optionalHeader + 0x70;
         IntPtr exportDirectory = mod + memory.ReadInt(dataDirectory);
         IntPtr names = mod + memory.ReadInt(exportDirectory + 0x20);
         IntPtr ordinals = mod + memory.ReadInt(exportDirectory + 0x24);
@@ -41,15 +34,13 @@ public static class ProcessUtils {
     }
 
     public static bool GetMonoModule(IntPtr handle, out IntPtr monoModule) {
-        int size = Is64BitProcess(handle) ? 8 : 4;
-
         IntPtr[] ptrs = [];
 
         if (!Native.EnumProcessModulesEx(handle, ptrs, 0, out int bytesNeeded, ModuleFilter.LIST_MODULES_ALL)) {
             throw new InjectorException("Failed to enumerate process modules", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
-        int count = bytesNeeded / size;
+        int count = bytesNeeded / 8;
         ptrs = new IntPtr[count];
 
         if (!Native.EnumProcessModulesEx(handle, ptrs, bytesNeeded, out bytesNeeded, ModuleFilter.LIST_MODULES_ALL)) {
@@ -62,7 +53,7 @@ public static class ProcessUtils {
                 _ = Native.GetModuleFileNameEx(handle, ptrs[i], path, 260);
 
                 if (path.ToString().IndexOf("mono", StringComparison.OrdinalIgnoreCase) > -1) {
-                    if (!Native.GetModuleInformation(handle, ptrs[i], out MODULEINFO info, (uint)(size * ptrs.Length))) {
+                    if (!Native.GetModuleInformation(handle, ptrs[i], out MODULEINFO info, (uint)Marshal.SizeOf<MODULEINFO>())) {
                         throw new InjectorException("Failed to get module information", new Win32Exception(Marshal.GetLastWin32Error()));
                     }
 
@@ -82,24 +73,5 @@ public static class ProcessUtils {
 
         monoModule = IntPtr.Zero;
         return false;
-    }
-
-    public static bool Is64BitProcess(IntPtr handle) {
-        try {
-            if (!Environment.Is64BitOperatingSystem) return false;
-
-            if (handle != IntPtr.Zero) {
-                ushort pMachine = 0;
-                // Check if the process is running on a 64-bit machine
-                _ = IsWow64Process2(handle, out pMachine, out _);
-                return pMachine != 332;
-            }
-        }
-
-        catch (Exception ex) {
-            File.AppendAllText($"{AppDomain.CurrentDomain.BaseDirectory}\\DebugLog.txt", $"[ProcessUtils] is64Bit - ERROR:{ex.Message}\r\n");
-        }
-
-        return true;
     }
 }
