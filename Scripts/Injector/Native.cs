@@ -21,7 +21,7 @@ public static class Native {
     [DllImport("psapi.dll", SetLastError = true)]
     public static extern bool EnumProcessModulesEx(IntPtr hProcess, [In][Out] IntPtr[] lphModule, int cb, out int lpcbNeeded, uint dwFilterFlag);
 
-    [DllImport("psapi.dll")]
+    [DllImport("psapi.dll", SetLastError = true)]
     public static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, uint nSize);
 
     [DllImport("psapi.dll", SetLastError = true)]

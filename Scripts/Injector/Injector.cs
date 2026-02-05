@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace SharpMonoInjector;
 public class Injector : IDisposable {
+    // Mono export names
     const string mono_get_root_domain = "mono_get_root_domain";
     const string mono_thread_attach = "mono_thread_attach";
     const string mono_image_open_from_data = "mono_image_open_from_data";
@@ -19,6 +20,11 @@ public class Injector : IDisposable {
     const string mono_image_strerror = "mono_image_strerror";
     const string mono_object_get_class = "mono_object_get_class";
     const string mono_class_get_name = "mono_class_get_name";
+
+    // Mono object offsets (64-bit)
+    const int MONO_STRING_LENGTH_OFFSET = 0x10;
+    const int MONO_STRING_CHARS_OFFSET = 0x14;
+    const int MONO_EXCEPTION_MESSAGE_OFFSET = 0x20;
 
     readonly Dictionary<string, IntPtr> Exports = new() {
         { mono_get_root_domain, IntPtr.Zero },
@@ -169,8 +175,8 @@ public class Injector : IDisposable {
     }
 
     string ReadMonoString(IntPtr monoString) {
-        int len = this.memory.ReadInt(monoString + 0x10);
-        return this.memory.ReadUnicodeString(monoString + 0x14, len * 2);
+        int len = this.memory.ReadInt(monoString + MONO_STRING_LENGTH_OFFSET);
+        return this.memory.ReadUnicodeString(monoString + MONO_STRING_CHARS_OFFSET, len * 2);
     }
 
     void RuntimeInvoke(IntPtr method) {
@@ -181,7 +187,7 @@ public class Injector : IDisposable {
 
         if (exc != IntPtr.Zero) {
             string className = this.GetClassName(exc);
-            string message = this.ReadMonoString((IntPtr)this.memory.ReadLong(exc + 0x20));
+            string message = this.ReadMonoString((IntPtr)this.memory.ReadLong(exc + MONO_EXCEPTION_MESSAGE_OFFSET));
             throw new InjectorException($"The managed method threw an exception: ({className}) {message}");
         }
     }

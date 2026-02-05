@@ -8,17 +8,26 @@ using System.Runtime.InteropServices;
 namespace SharpMonoInjector;
 
 public static class ProcessUtils {
+    // PE format offsets
+    const int PE_HEADER_OFFSET = 0x3C;
+    const int OPTIONAL_HEADER_OFFSET = 0x18;
+    const int DATA_DIRECTORY_OFFSET_64 = 0x70;
+    const int EXPORT_NAMES_OFFSET = 0x20;
+    const int EXPORT_ORDINALS_OFFSET = 0x24;
+    const int EXPORT_FUNCTIONS_OFFSET = 0x1C;
+    const int EXPORT_NUM_NAMES_OFFSET = 0x18;
+
     public static IEnumerable<ExportedFunction> GetExportedFunctions(IntPtr handle, IntPtr mod) {
         using Memory memory = new(handle);
-        int e_lfanew = memory.ReadInt(mod + 0x3C);
+        int e_lfanew = memory.ReadInt(mod + PE_HEADER_OFFSET);
         IntPtr ntHeaders = mod + e_lfanew;
-        IntPtr optionalHeader = ntHeaders + 0x18;
-        IntPtr dataDirectory = optionalHeader + 0x70;
+        IntPtr optionalHeader = ntHeaders + OPTIONAL_HEADER_OFFSET;
+        IntPtr dataDirectory = optionalHeader + DATA_DIRECTORY_OFFSET_64;
         IntPtr exportDirectory = mod + memory.ReadInt(dataDirectory);
-        IntPtr names = mod + memory.ReadInt(exportDirectory + 0x20);
-        IntPtr ordinals = mod + memory.ReadInt(exportDirectory + 0x24);
-        IntPtr functions = mod + memory.ReadInt(exportDirectory + 0x1C);
-        int count = memory.ReadInt(exportDirectory + 0x18);
+        IntPtr names = mod + memory.ReadInt(exportDirectory + EXPORT_NAMES_OFFSET);
+        IntPtr ordinals = mod + memory.ReadInt(exportDirectory + EXPORT_ORDINALS_OFFSET);
+        IntPtr functions = mod + memory.ReadInt(exportDirectory + EXPORT_FUNCTIONS_OFFSET);
+        int count = memory.ReadInt(exportDirectory + EXPORT_NUM_NAMES_OFFSET);
 
         for (int i = 0; i < count; i++) {
             int offset = memory.ReadInt(names + (i * 4));

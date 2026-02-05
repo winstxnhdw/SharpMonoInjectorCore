@@ -24,7 +24,6 @@ void Inject(string targetProcess, FileInfo assembly, string loaderNamespace, str
 RootCommand rootCommand = new(
     "SharpMonoInjectorCore is a tool for injecting assemblies into Mono embedded applications, made compatible with Microsoft .NET Core. " +
     "The target process may require a restart before injecting an updated version of the assembly. " +
-    "Both x86 and x64 processes are supported. " +
     "You can see an example implementation here: https://github.com/winstxnhdw/rc15-hax/blob/master/rc15-hax/Scripts/Loader.cs"
 );
 
